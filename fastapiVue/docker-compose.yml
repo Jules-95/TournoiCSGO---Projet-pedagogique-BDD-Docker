@@ -1,0 +1,30 @@
+services:
+  backend:
+    build: ./backend
+    container_name: fastapi-dev
+    environment:
+      # adapte user/pass/dbname à ton pg-sandbox
+      DATABASE_URL: postgresql://postgres:postgres@pg-sandbox:5432/postgres
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    networks:
+      - pg-network
+
+  frontend:
+    build: ./frontend
+    container_name: vue-dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - pg-network
+
+networks:
+  pg-network:
+    external: true
