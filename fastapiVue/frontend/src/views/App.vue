@@ -4,9 +4,8 @@ import { ref } from 'vue'
 // Données du menu de navigation (Accessibles sur toutes les pages)
 const navLinks = ref([
   { text: 'Accueil', url: '/' },
-  { text: 'Tournois', url: '#' },
-  { text: 'Equipes', url: '#' },
-  { text: 'Classements', url: '#' }
+  { text: 'Match', url: '/match' },
+  { text: 'Rejoindre', url: '/rejoindre' }
 ])
 </script>
 
