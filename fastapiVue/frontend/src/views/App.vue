@@ -1,28 +1,17 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import DataTable from './components/DataTable.vue'
-
-const rows = ref([])
-const loading = ref(true)
-const error = ref(null)
-
-onMounted(async () => {
-  try {
-    const res = await fetch('/api/films')
-    rows.value = await res.json()
-  } catch (e) {
-    error.value = 'Erreur API'
-  } finally {
-    loading.value = false
-  }
-})
+// Plus de logique de films ici ! 
+// Juste le squelette.
 </script>
 
 <template>
-  <h1>Liste des films</h1>
+  <header>
+    <nav>
+      <RouterLink to="/">Accueil</RouterLink> | 
+      <RouterLink to="/a-propos">À Propos</RouterLink> 
+    </nav>
+  </header>
 
-  <p v-if="loading">Chargement...</p>
-  <p v-else-if="error">{{ error }}</p>
-  <DataTable v-else :rows="rows" />
-
+  <main>
+    <RouterView />
+  </main>
 </template>
