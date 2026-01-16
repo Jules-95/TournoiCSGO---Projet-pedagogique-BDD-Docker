@@ -1,6 +1,6 @@
 import os
 import psycopg2
-from typing import Optional
+from typing import Optional, List
 from fastapi import FastAPI, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -121,19 +121,50 @@ def add_participant(
 
 @app.post("/equipes")
 def add_equipe(
-    nom_equipe: str = Form(...)
+    nom_equipe: str = Form(...),
+    participants: List[str] = Form(default=[])
 ):
     """
-    Exemple de création d'une equipe via formulaire.
+    Crée une équipe et lie éventuellement des participants (créés à la volée si besoin).
     """
     conn = get_conn()
     cur = conn.cursor()
     try:
+        # 1. Insertion de l'équipe
         cur.execute(
             "INSERT INTO equipe (nom_equipe) VALUES (%s) RETURNING id_equipe",
             (nom_equipe,)
         )
-        new_id = cur.fetchone()[0]
+        id_equipe = cur.fetchone()[0]
+        
+        # Saison 2026 par défaut (ID 3 dans notre seed)
+        id_saison = 3
+        
+        # 2. Traitement des participants
+        for pseudo in participants:
+            if not pseudo.strip():
+                continue
+                
+            # Vérifier si le participant existe
+            cur.execute("SELECT id_participant FROM participant WHERE pseudo = %s", (pseudo,))
+            row = cur.fetchone()
+            
+            if row:
+                id_participant = row[0]
+            else:
+                # Création simplifiée si inexistant
+                cur.execute(
+                    "INSERT INTO participant (pseudo, date_naissance) VALUES (%s, '2000-01-01') RETURNING id_participant",
+                    (pseudo,)
+                )
+                id_participant = cur.fetchone()[0]
+            
+            # 3. Liaison dans membre_equipe
+            cur.execute(
+                "INSERT INTO membre_equipe (id_participant, id_equipe, id_saison) VALUES (%s, %s, %s)",
+                (id_participant, id_equipe, id_saison)
+            )
+            
         conn.commit()
     except Exception as e:
         conn.rollback()
@@ -142,4 +173,4 @@ def add_equipe(
         cur.close()
         conn.close()
     
-    return {"message": "Equipe ajoutée", "id": new_id}
+    return {"message": "Equipe et participants créés/liés avec succès", "id_equipe": id_equipe}
