@@ -2,6 +2,7 @@ import os
 import psycopg2
 from typing import Optional
 from fastapi import FastAPI, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="CSGO Tournament API")
 
@@ -118,14 +119,14 @@ def add_participant(
         
     return {"message": "Participant ajouté", "id": new_id}
 
-# @app.post("/login")
-# def login(
-#     username: str = Form(...),
-#     password: str = Form(...)
-# ):
-#     """
-#     Exemple de login via formulaire.
-#     """
-#     if username == "admin" and password == "p@ssword":
-#         return {"message": "Connexion réussie", "user": username}
-#     raise HTTPException(status_code=401, detail="Identifiants invalides")
+@app.post("/login")
+def login(
+    username: str = Form(...),
+    password: str = Form(...)
+):
+    """
+    Exemple de login via formulaire.
+    """
+    if username == "admin" and password == "p@ssword":
+        return {"message": "Connexion réussie", "user": username}
+    raise HTTPException(status_code=401, detail="Identifiants invalides")
