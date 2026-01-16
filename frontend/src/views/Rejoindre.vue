@@ -37,11 +37,25 @@ async function submit() {
       </div>
     </section>
     <section class="formulaire">
-      <form @submit.prevent="submit">
-        <input v-model="pseudo" placeholder="Pseudo" />
-        <input v-model="date_naissance" placeholder="Date de Naissance" />
-        <input v-model.number="mail" placeholder="Mail" />
-        <input v-model.number="pays" placeholder="Pays" />
+      <form @submit.prevent="submit" class="formContainer">
+        <div>
+          <div>
+            <label for="">Pseudo</label>
+            <input v-model="pseudo" placeholder="Pseudo" />
+          </div>
+          <div>
+            <label for="">Date de Naissance</label>
+            <input v-model="date_naissance" placeholder="Date de Naissance" />
+          </div>
+          <div>
+            <label for="">Mail</label>
+            <input v-model.number="mail" placeholder="Mail" />
+          </div>
+          <div>
+            <label for="">Pays</label>
+            <input v-model.number="pays" placeholder="Pays" />
+          </div>
+        </div>
         <button class="btn btn-primary size-lg">S'inscrire</button>
       </form>
       <p>{{ message }}</p>
