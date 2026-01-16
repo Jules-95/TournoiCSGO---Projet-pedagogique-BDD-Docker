@@ -53,7 +53,6 @@ async function getParticipants() {
         </h3>
       </div>
     </section>
-    <button @click="getParticipants">Afficher les participants</button>
     <section class="formulaire">
       <form @submit.prevent="submit" class="formContainer">
         <div class="grid">
