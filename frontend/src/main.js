@@ -1,12 +1,10 @@
-
 import { createApp } from 'vue'
-import App from './views/App.vue'
 import './style.css'
-// Importer le routeur que vous avez configuré
-import router from './route/index.js' 
+import App from './views/App.vue' // Attention: ton App.vue est dans views/
+import router from './route/index.js' // Attention: ton index.js est dans route/
 
 const app = createApp(App)
 
-app.use(router) 
+app.use(router) // INDISPENSABLE : On injecte le routeur
 
 app.mount('#app')

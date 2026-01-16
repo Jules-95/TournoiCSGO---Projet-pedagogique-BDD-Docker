@@ -1,8 +1,17 @@
 import os
 import psycopg2
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En production, spécifiez les origines autorisées
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_conn():
     return psycopg2.connect(

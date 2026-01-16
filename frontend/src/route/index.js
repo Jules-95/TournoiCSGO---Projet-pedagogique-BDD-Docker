@@ -1,9 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+// 1. Imports propres des composants (Vérifiés avec tes fichiers)
 import HomeView from '../views/Home.vue'
-import AproposView from '../views/Apropos.vue' // <--- AJOUT
+import AproposView from '../views/Apropos.vue'
 import MatchView from '../views/Match.vue'
 import RejoindreView from '../views/Rejoindre.vue'
+import TeamsList from '../views/TeamsList.vue'      // Nom standardisé
+import Dashboard from '../views/Dashboard.vue'
+import Leaderboard from '../views/Leaderboard.vue'
+import TournamentDetail from '../views/TournamentDetail.vue' // Singulier (comme ton fichier)
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,21 +18,40 @@ const router = createRouter({
       name: 'home',
       component: HomeView
     },
-    // 2. AJOUTEZ l'objet de configuration ici
     {
-      path: '/a-propos',      // L'URL que vous voulez (ex: monsite.com/a-propos)
-      name: 'apropos',        // Un petit nom interne pour Vue
-      component: AproposView  // Le composant importé plus haut
+      path: '/a-propos',
+      name: 'apropos',
+      component: AproposView
     },
-     {
-      path: '/match',      // L'URL que vous voulez (ex: monsite.com/a-propos)
-      name: 'match',        // Un petit nom interne pour Vue
-      component: MatchView  // Le composant importé plus haut
-     },
     {
-      path: '/rejoindre',      // L'URL que vous voulez (ex: monsite.com/a-propos)
-      name: 'rejoindre',        // Un petit nom interne pour Vue
-      component: RejoindreView  // Le composant importé plus haut
+      path: '/matchs',  // J'ai mis au pluriel pour faire propre dans l'URL
+      name: 'matchs',
+      component: MatchView
+    },
+    {
+      path: '/rejoindre',
+      name: 'rejoindre',
+      component: RejoindreView
+    },
+    {
+      path: '/equipes',
+      name: 'teams',
+      component: TeamsList
+    },
+    {
+      path: '/classements',
+      name: 'leaderboard',
+      component: Leaderboard
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: Dashboard
+    },
+    {
+      path: '/tournoi/:id', // Route dynamique pour les détails
+      name: 'tournament-detail',
+      component: TournamentDetail
     }
   ]
 })
