@@ -119,14 +119,27 @@ def add_participant(
         
     return {"message": "Participant ajouté", "id": new_id}
 
-@app.post("/login")
-def login(
-    username: str = Form(...),
-    password: str = Form(...)
+@app.post("/equipes")
+def add_equipe(
+    nom_equipe: str = Form(...)
 ):
     """
-    Exemple de login via formulaire.
+    Exemple de création d'une equipe via formulaire.
     """
-    if username == "admin" and password == "p@ssword":
-        return {"message": "Connexion réussie", "user": username}
-    raise HTTPException(status_code=401, detail="Identifiants invalides")
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "INSERT INTO equipe (nom_equipe) VALUES (%s) RETURNING id_equipe",
+            (nom_equipe,)
+        )
+        new_id = cur.fetchone()[0]
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+    
+    return {"message": "Equipe ajoutée", "id": new_id}

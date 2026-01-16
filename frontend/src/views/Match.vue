@@ -5,21 +5,41 @@ const plannedMatches = ref([])
 const liveMatches = ref([])
 const completedMatches = ref([])
 
-const fetchMatches = async () => {
+function formatMatch(match) {
+  const dateObj = new Date(match.date_heure)
+
+  return {
+    id: match.numero_match,
+    etat: match.etat, // ✅ IMPORTANT
+    team1: match.equipes[0]?.nom ?? 'TBD',
+    team2: match.equipes[1]?.nom ?? 'TBD',
+    score: `${match.equipes[0]?.score ?? 0}-${match.equipes[1]?.score ?? 0}`,
+    date: dateObj.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+    time: dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+    tournament: 'Tournoi',
+    game: 'CS:GO'
+  }
+}
+
+async function getMatches() {
   try {
     const res = await fetch('http://localhost:8000/matchs')
     const data = await res.json()
 
-    plannedMatches.value = data.filter(m => m.etat === 'prévu')
-    liveMatches.value = data.filter(m => m.etat === 'en_cours')
-    completedMatches.value = data.filter(m => m.etat === 'terminé')
+    const formatted = data.map(formatMatch)
 
-  } catch (error) {
-    console.error('Erreur lors du chargement des matchs', error)
+    plannedMatches.value = formatted.filter(m => m.etat === 'prévu')
+    liveMatches.value = formatted.filter(m => m.etat === 'en_cours')
+    completedMatches.value = formatted.filter(m => m.etat === 'terminé')
+
+    console.log('PLANNED:', plannedMatches.value)
+
+  } catch (err) {
+    console.error('Erreur chargement matchs', err)
   }
 }
 
-onMounted(fetchMatches)
+onMounted(getMatches)
 
 const getGameBadgeStyle = (game) => {
   const styles = {
@@ -28,6 +48,9 @@ const getGameBadgeStyle = (game) => {
   return styles[game] || { backgroundColor: '#666' }
 }
 </script>
+
+
+
 
 <template>
   <div class="matches-container">
