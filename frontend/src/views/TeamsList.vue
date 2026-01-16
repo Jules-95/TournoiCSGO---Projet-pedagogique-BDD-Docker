@@ -10,7 +10,7 @@ const error = ref(null)
 const newTeam = ref({
   nom: '',
   // Tableau de 5 slots pour les ID des joueurs
-  membres: ["", "", "", "", ""]
+  membres: [null, null, null, null, null]
 })
 const isCreating = ref(false)
 
@@ -23,7 +23,7 @@ const createTeam = async () => {
   }
 
   // Filtrer les IDs vides
-  const selectedIds = newTeam.value.membres.filter(id => id !== "")
+  const selectedIds = newTeam.value.membres.filter(id => id !== null).map(id => Number(id))
   
   // Vérifier qu'il y a bien 5 joueurs
   if (selectedIds.length < 5) {
@@ -69,7 +69,7 @@ const createTeam = async () => {
     
     // Reset du formulaire
     newTeam.value.nom = ''
-    newTeam.value.membres = ["", "", "", "", ""]
+    newTeam.value.membres = [null, null, null, null, null]
     
     // Rafraîchir la liste
     fetchData() 
@@ -154,7 +154,7 @@ onMounted(() => {
                 <label>Sélectionnez 5 Joueurs :</label>
                 <div v-for="(member, index) in newTeam.membres" :key="index" class="select-wrapper">
                   <select v-model="newTeam.membres[index]">
-                    <option value="" disabled selected>Joueur {{ index + 1 }}</option>
+                    <option :value="null" disabled selected>Joueur {{ index + 1 }}</option>
                     <option 
                       v-for="p in participants" 
                       :key="p.id_participant" 
