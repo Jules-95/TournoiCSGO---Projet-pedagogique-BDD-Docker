@@ -5,6 +5,19 @@ const teams = ref([])
 const participants = ref([]) 
 const loading = ref(true)
 
+async function getParticipants() {
+  const res = await fetch("http://localhost:8000/participants", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await res.json();
+  console.log(data)
+  participants.value = data;
+}
+
 const fetchData = async () => {
     loading.value = true
     setTimeout(() => {
@@ -18,20 +31,21 @@ const fetchData = async () => {
       ]
 
       // Mock Data Participants
-      participants.value = [
-        { id: 1, pseudo: 'ZywOo', isPro: true, structure: 'Vitality', country: 'FR', avatar: '👑' },
-        { id: 2, pseudo: 'Faker', isPro: true, structure: 'T1', country: 'KR', avatar: '🐐' },
-        { id: 3, pseudo: 'Gotaga', isPro: false, structure: null, country: 'FR', avatar: '🔴' },
-        { id: 4, pseudo: 'S1mple', isPro: true, structure: 'Falcons', country: 'UA', avatar: '🎯' },
-        { id: 5, pseudo: 'KennyS', isPro: false, structure: null, country: 'FR', avatar: '⚡' },
-        { id: 6, pseudo: 'Caps', isPro: true, structure: 'G2', country: 'DK', avatar: '🧢' }
-      ]
+      // participants.value = [
+      //   { id: 1, pseudo: 'ZywOo', isPro: true, structure: 'Vitality', country: 'FR', avatar: '👑' },
+      //   { id: 2, pseudo: 'Faker', isPro: true, structure: 'T1', country: 'KR', avatar: '🐐' },
+      //   { id: 3, pseudo: 'Gotaga', isPro: false, structure: null, country: 'FR', avatar: '🔴' },
+      //   { id: 4, pseudo: 'S1mple', isPro: true, structure: 'Falcons', country: 'UA', avatar: '🎯' },
+      //   { id: 5, pseudo: 'KennyS', isPro: false, structure: null, country: 'FR', avatar: '⚡' },
+      //   { id: 6, pseudo: 'Caps', isPro: true, structure: 'G2', country: 'DK', avatar: '🧢' }
+      // ]
 
       loading.value = false
     }, 600)
 }
 
 onMounted(() => {
+  getParticipants()
   fetchData()
 })
 </script>
@@ -77,16 +91,15 @@ onMounted(() => {
         <div class="grid-container participants-grid">
           <div v-for="player in participants" :key="player.id" class="card participant-card" :class="{ 'pro-card': player.isPro }">
             <div class="participant-header">
-              <div class="avatar-medium">{{ player.avatar }}</div>
               <div class="identity">
-                <h2>{{ player.pseudo }} <span v-if="player.isPro" class="pro-badge">PRO</span></h2>
-                <span class="country-flag">{{ player.country }}</span>
+                <h2>{{ player.pseudo }}</h2>
+                <span class="country-flag">{{ player.pays }}</span>
               </div>
             </div>
-            <div class="participant-body">
+            <!-- <div class="participant-body">
               <p class="structure-info" v-if="player.isPro">Structure : <strong>{{ player.structure }}</strong></p>
               <p class="structure-info amateur" v-else>Statut : Amateur</p>
-            </div>
+            </div> -->
             <div class="card-footer">
               <button class="btn btn-outline full-width btn-sm">Profil</button>
             </div>
