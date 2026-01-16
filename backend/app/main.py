@@ -1,35 +1,9 @@
 import os
 import psycopg2
-from typing import List, Optional
-from datetime import date, datetime
+from typing import Optional
 from fastapi import FastAPI, Form, HTTPException
-from pydantic import BaseModel, EmailStr
 
 app = FastAPI(title="CSGO Tournament API")
-
-# --- Modèles Pydantic ---
-
-class EquipeBase(BaseModel):
-    nom_equipe: str
-
-class Equipe(EquipeBase):
-    id_equipe: int
-
-class ParticipantBase(BaseModel):
-    pseudo: str
-    date_naissance: date
-    email: Optional[EmailStr] = None
-    pays: Optional[str] = None
-
-class Participant(ParticipantBase):
-    id_participant: int
-
-class Match(BaseModel):
-    numero_match: int
-    date_heure: datetime
-    etat: str
-    id_saison: Optional[int] = None
-    scores: Optional[List[dict]] = []
 
 # --- Connexion BDD ---
 
@@ -48,7 +22,7 @@ def get_conn():
 def ping():
     return {"ok": True}
 
-@app.get("/equipes", response_model=List[Equipe])
+@app.get("/equipes")
 def get_equipes():
     conn = get_conn()
     cur = conn.cursor()
@@ -58,7 +32,7 @@ def get_equipes():
     conn.close()
     return [{"id_equipe": r[0], "nom_equipe": r[1]} for r in rows]
 
-@app.get("/participants", response_model=List[Participant])
+@app.get("/participants")
 def get_participants():
     conn = get_conn()
     cur = conn.cursor()
@@ -80,7 +54,6 @@ def get_participants():
 def get_matchs():
     conn = get_conn()
     cur = conn.cursor()
-    # On récupère les matchs et les noms des équipes liées
     query = """
         SELECT m.numero_match, m.date_heure, m.etat, e.nom_equipe, me.score
         FROM matchs m
@@ -93,7 +66,6 @@ def get_matchs():
     cur.close()
     conn.close()
     
-    # Transformation pour grouper par match
     matchs_dict = {}
     for r in rows:
         num = r[0]
@@ -108,7 +80,35 @@ def get_matchs():
     
     return list(matchs_dict.values())
 
-# --- Endpoint pédagogique (Formulaire) ---
+# --- Gestion des Participants par Formulaire ---
+
+@app.post("/participants")
+def add_participant(
+    pseudo: str = Form(...),
+    date_naissance: str = Form(...),
+    email: Optional[str] = Form(None),
+    pays: Optional[str] = Form(None)
+):
+    """
+    Enregistre un participant en utilisant des paramètres Form.
+    """
+    conn = get_conn()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "INSERT INTO participant (pseudo, date_naissance, email, pays) VALUES (%s, %s, %s, %s) RETURNING id_participant",
+            (pseudo, date_naissance, email, pays)
+        )
+        new_id = cur.fetchone()[0]
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+        
+    return {"message": "Participant ajouté", "id": new_id}
 
 # @app.post("/login")
 # def login(
@@ -116,10 +116,8 @@ def get_matchs():
 #     password: str = Form(...)
 # ):
 #     """
-#     Exemple pédagogique de réception de données via un formulaire HTML classique.
-#     Utilise 'python-multipart' (doit être installé via pip).
+#     Exemple de login via formulaire.
 #     """
-#     # Ici on simule une vérification
 #     if username == "admin" and password == "p@ssword":
 #         return {"message": "Connexion réussie", "user": username}
 #     raise HTTPException(status_code=401, detail="Identifiants invalides")
