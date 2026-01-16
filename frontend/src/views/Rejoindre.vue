@@ -20,6 +20,11 @@ async function submit() {
 
   const data = await res.json();
   message.value = data.status;
+  pseudo.value = "";
+  date_naissance.value = "";
+  mail.value = "";
+  pays.value = "";
+  message.value = "Participants inscrits ✅";
 }
 
 
