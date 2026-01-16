@@ -93,14 +93,14 @@ def get_matchs():
 def get_compo_equipe(id_equipe: int):
     conn = get_conn()
     cur = conn.cursor()
-    query = f"""
+    query = """
         SELECT p.pseudo, p.pays
         FROM membre_equipe AS me
         INNER JOIN participant AS p
         	ON me.id_participant = p.id_participant
-        WHERE me.id_equipe = {id_equipe}
+        WHERE me.id_equipe = %s
     """
-    cur.execute(query)
+    cur.execute(query, (id_equipe,))
     rows = cur.fetchall()
     cur.close()
     conn.close()
@@ -142,11 +142,10 @@ def add_participant(
 @app.post("/equipes")
 def add_equipe(
     nom_equipe: str = Form(...),
-    joueurs: List[str] = Form(default=[])
+    joueurs: List[int] = Form(default=[])
 ):
     """
-    Crée une équipe et lie des participants existants par leur ID ou Pseudo.
-    Aucun joueur n'est créé automatiquement.
+    Crée une équipe et lie des participants existants par leur ID.
     """
     conn = get_conn()
     cur = conn.cursor()
@@ -161,27 +160,17 @@ def add_equipe(
         # Saison 2026 par défaut (ID 3 dans notre seed)
         id_saison = 3
         
-        # 2. Liaison dans membre_equipe pour chaque identifiant reçu
-        for j_ident in joueurs:
-            if not j_ident.strip():
-                continue
-                
-            # Recherche par ID si c'est un nombre, sinon par Pseudo
-            if j_ident.isdigit():
-                cur.execute("SELECT id_participant FROM participant WHERE id_participant = %s", (int(j_ident),))
-            else:
-                cur.execute("SELECT id_participant FROM participant WHERE pseudo = %s", (j_ident,))
-            
-            row = cur.fetchone()
-            if not row:
-                raise Exception(f"Le joueur '{j_ident}' n'existe pas dans la base. Veuillez le créer d'abord.")
-            
-            id_participant = row[0]
-            
+        # 2. Liaison dans membre_equipe pour chaque ID reçu
+        for id_p in joueurs:
+            # Vérification de l'existence du joueur
+            cur.execute("SELECT id_participant FROM participant WHERE id_participant = %s", (id_p,))
+            if not cur.fetchone():
+                raise Exception(f"Le joueur ID {id_p} n'existe pas.")
+
             # Insertion du lien
             cur.execute(
                 "INSERT INTO membre_equipe (id_participant, id_equipe, id_saison) VALUES (%s, %s, %s)",
-                (id_participant, id_equipe, id_saison)
+                (id_p, id_equipe, id_saison)
             )
             
         conn.commit()
