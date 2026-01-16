@@ -7,22 +7,21 @@ const mail = ref("");
 const pays = ref("");
 
 async function submit() {
-  const res = await fetch("/api/participant", {
+  const formData = new FormData();
+  formData.append("pseudo", pseudo.value);
+  formData.append("date_naissance", date_naissance.value);
+  formData.append("mail", mail.value);
+  formData.append("pays", pays.value);
+
+  const res = await fetch("http://localhost:8000/participants", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      pseudo: pseudo.value,
-      date_naissance: date_naissance.value,
-      mail: mail.value,
-      pays: pays.value,
-    }),
+    body: formData,
   });
 
   const data = await res.json();
   message.value = data.status;
 }
+
 
 const participants = ref([]);
 const message = ref("");
