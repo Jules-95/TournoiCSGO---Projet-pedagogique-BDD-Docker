@@ -146,28 +146,42 @@ def add_equipe(
 ):
     """
     Crée une équipe et lie des participants existants par leur ID.
+    Vérifie qu'un joueur n'est pas déjà dans une équipe pour la saison actuelle.
     """
     conn = get_conn()
     cur = conn.cursor()
     try:
-        # 1. Insertion de l'équipe
+        # Saison 2026 par défaut (ID 3 dans notre seed)
+        id_saison = 3
+        
+        # 1. Vérification préalable de tous les joueurs
+        for id_p in joueurs:
+            # Vérifier l'existence et récupérer le pseudo
+            cur.execute("SELECT pseudo FROM participant WHERE id_participant = %s", (id_p,))
+            res_p = cur.fetchone()
+            if not res_p:
+                raise Exception(f"Le joueur ID {id_p} n'existe pas.")
+            
+            pseudo = res_p[0]
+            
+            # Vérifier si déjà dans une équipe pour cette saison
+            cur.execute(
+                "SELECT e.nom_equipe FROM membre_equipe me JOIN equipe e ON me.id_equipe = e.id_equipe WHERE me.id_participant = %s AND me.id_saison = %s",
+                (id_p, id_saison)
+            )
+            res_m = cur.fetchone()
+            if res_m:
+                raise Exception(f"Le joueur '{pseudo}' est déjà dans l'équipe '{res_m[0]}' pour cette saison.")
+
+        # 2. Insertion de l'équipe
         cur.execute(
             "INSERT INTO equipe (nom_equipe) VALUES (%s) RETURNING id_equipe",
             (nom_equipe,)
         )
         id_equipe = cur.fetchone()[0]
         
-        # Saison 2026 par défaut (ID 3 dans notre seed)
-        id_saison = 3
-        
-        # 2. Liaison dans membre_equipe pour chaque ID reçu
+        # 3. Liaison dans membre_equipe
         for id_p in joueurs:
-            # Vérification de l'existence du joueur
-            cur.execute("SELECT id_participant FROM participant WHERE id_participant = %s", (id_p,))
-            if not cur.fetchone():
-                raise Exception(f"Le joueur ID {id_p} n'existe pas.")
-
-            # Insertion du lien
             cur.execute(
                 "INSERT INTO membre_equipe (id_participant, id_equipe, id_saison) VALUES (%s, %s, %s)",
                 (id_p, id_equipe, id_saison)
