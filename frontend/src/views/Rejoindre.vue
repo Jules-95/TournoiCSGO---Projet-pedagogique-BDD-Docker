@@ -38,20 +38,20 @@ async function submit() {
     </section>
     <section class="formulaire">
       <form @submit.prevent="submit" class="formContainer">
-        <div>
-          <div>
+        <div class="grid">
+          <div class="form-group">
             <label for="">Pseudo</label>
             <input v-model="pseudo" placeholder="Pseudo" />
           </div>
-          <div>
+          <div class="form-group">
             <label for="">Date de Naissance</label>
             <input v-model="date_naissance" placeholder="Date de Naissance" />
           </div>
-          <div>
+          <div class="form-group">
             <label for="">Mail</label>
             <input v-model.number="mail" placeholder="Mail" />
           </div>
-          <div>
+          <div class="form-group">
             <label for="">Pays</label>
             <input v-model.number="pays" placeholder="Pays" />
           </div>

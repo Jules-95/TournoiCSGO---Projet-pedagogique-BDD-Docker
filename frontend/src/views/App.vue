@@ -31,7 +31,7 @@ const navLinks = ref([
 
         <div class="auth-buttons">
             <router-link to="/dashboard" class="btn btn-outline">Mon Espace</router-link>
-            <button class="btn btn-primary">S'inscrire</button>
+            <router-link to="/rejoindre" class="btn btn-outline">S'inscrire</router-link>
         </div>
     </header>
 
