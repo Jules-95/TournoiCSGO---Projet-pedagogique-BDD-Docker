@@ -4,82 +4,97 @@ import { ref, onMounted } from 'vue'
 const teams = ref([])
 const participants = ref([]) 
 const loading = ref(true)
+const error = ref(null)
 
-async function getParticipants() {
-  const res = await fetch("http://localhost:8000/participants", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  const data = await res.json();
-  console.log(data)
-  participants.value = data;
+// Fonction utilitaire pour générer des couleurs d'avatar
+const getAvatarColor = (name) => {
+    if (!name) return '#34495e';
+    const colors = ['#e74c3c', '#3498db', '#9b59b6', '#f1c40f', '#2ecc71', '#e67e22'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
 }
 
 const fetchData = async () => {
     loading.value = true
-    setTimeout(() => {
-      // Mock Data Équipes
-      teams.value = [
-        { id: 1, nom: 'Karmine Corp', tag: 'KC', jeu: 'VALORANT', avatar: '🟦', membres: 5, description: "L'équipe au mur bleu." },
-        { id: 2, nom: 'Vitality', tag: 'VIT', jeu: 'CS2', avatar: '🐝', membres: 5, description: "V for Victory." },
-        { id: 3, nom: 'Gentle Mates', tag: 'M8', jeu: 'VALORANT', avatar: '🟩', membres: 6, description: "Mates before dates." },
-        { id: 4, nom: 'Solary', tag: 'SLY', jeu: 'LOL', avatar: '☀️', membres: 5, description: "Les amis du soleil." },
-        { id: 5, nom: 'Mandatory', tag: 'MDR', jeu: 'VALORANT', avatar: '🔨', membres: 5, description: "Toujours présents." }
-      ]
+    error.value = null
+    
+    try {
+        // 1. Appel vers ton Backend Python (via le proxy Vite)
+        const [resEquipes, resParticipants] = await Promise.all([
+            fetch('/api/equipes'),
+            fetch('/api/participants')
+        ])
 
-      // Mock Data Participants
-      // participants.value = [
-      //   { id: 1, pseudo: 'ZywOo', isPro: true, structure: 'Vitality', country: 'FR', avatar: '👑' },
-      //   { id: 2, pseudo: 'Faker', isPro: true, structure: 'T1', country: 'KR', avatar: '🐐' },
-      //   { id: 3, pseudo: 'Gotaga', isPro: false, structure: null, country: 'FR', avatar: '🔴' },
-      //   { id: 4, pseudo: 'S1mple', isPro: true, structure: 'Falcons', country: 'UA', avatar: '🎯' },
-      //   { id: 5, pseudo: 'KennyS', isPro: false, structure: null, country: 'FR', avatar: '⚡' },
-      //   { id: 6, pseudo: 'Caps', isPro: true, structure: 'G2', country: 'DK', avatar: '🧢' }
-      // ]
+        if (!resEquipes.ok || !resParticipants.ok) {
+            throw new Error("Erreur lors de la communication avec le serveur (Vérifie que le backend tourne)")
+        }
 
-      loading.value = false
-    }, 600)
+        // 2. Stockage des données reçues du Python
+        teams.value = await resEquipes.json()
+        participants.value = await resParticipants.json()
+
+    } catch (e) {
+        console.error("Erreur API:", e)
+        error.value = "Impossible de charger les données. Vérifie que ton backend est lancé."
+    } finally {
+        loading.value = false
+    }
 }
 
 onMounted(() => {
-  getParticipants()
   fetchData()
 })
 </script>
 
 <template>
   <div class="page-container">
+    
     <div class="header-section">
       <h1 class="page-main-title">Les Forces en Présence</h1>
-      <p class="page-subtitle">Découvrez l'ensemble des compétiteurs inscrits au tournoi.</p>
+      <p class="page-subtitle">Découvrez l'ensemble des compétiteurs inscrits au Tournoi Bagarre.</p>
     </div>
 
-    <div v-if="!loading">
+    <div v-if="loading" class="state-container">
+        <div class="spinner"></div>
+        <p>Connexion à la base de données...</p>
+    </div>
+
+    <div v-else-if="error" class="state-container error">
+        <p>⚠️ {{ error }}</p>
+    </div>
+
+    <div v-else>
       
       <section class="list-section">
-        <h2 class="section-title">🏆 Les Équipes</h2>
+        <h2 class="section-title">🏆 Les Équipes ({{ teams.length }})</h2>
+        
         <div class="grid-container teams-grid">
-          <div v-for="team in teams" :key="team.id" class="card team-card">
+          <div v-for="team in teams" :key="team.id_equipe" class="card team-card">
+            
             <div class="card-header">
-              <div class="avatar-large">{{ team.avatar }}</div>
+              <div class="avatar-large" :style="{ backgroundColor: getAvatarColor(team.nom_equipe) }">
+                {{ team.nom_equipe.charAt(0).toUpperCase() }}
+              </div>
               <div class="identity">
-                <h2>{{ team.nom }}</h2>
-                <span class="tag">[{{ team.tag }}]</span>
+                <h2>{{ team.nom_equipe }}</h2>
+                <span class="tag">INSCRIT</span> 
               </div>
             </div>
+
             <div class="card-body">
-              <p class="description">{{ team.description }}</p>
+              <p class="description">Équipe officielle du tournoi.</p>
               <div class="info-badges">
-                <span class="badge game">🎮 {{ team.jeu }}</span>
-                <span class="badge members">👥 {{ team.membres }} Joueurs</span>
+                <span class="badge game">🎮 CS2</span>
               </div>
             </div>
+
             <div class="card-footer">
-              <button class="btn btn-outline full-width">Voir l'équipe</button>
+              <button class="btn btn-outline full-width">Voir le Roster</button>
             </div>
+
           </div>
         </div>
       </section>
@@ -87,86 +102,87 @@ onMounted(() => {
       <div class="section-divider"></div>
 
       <section class="list-section">
-        <h2 class="section-title">👤 Les Participants</h2>
+        <h2 class="section-title">👤 Les Participants ({{ participants.length }})</h2>
+        
         <div class="grid-container participants-grid">
-          <div v-for="player in participants" :key="player.id" class="card participant-card" :class="{ 'pro-card': player.isPro }">
+          <div v-for="player in participants" :key="player.id_participant" class="card participant-card">
+            
             <div class="participant-header">
+              <div class="avatar-medium" :style="{ backgroundColor: getAvatarColor(player.pseudo) }">
+                 {{ player.pseudo.charAt(0).toUpperCase() }}
+              </div>
               <div class="identity">
                 <h2>{{ player.pseudo }}</h2>
-                <span class="country-flag">{{ player.pays }}</span>
+                <span class="country-flag" v-if="player.pays">📍 {{ player.pays }}</span>
               </div>
             </div>
-            <!-- <div class="participant-body">
-              <p class="structure-info" v-if="player.isPro">Structure : <strong>{{ player.structure }}</strong></p>
-              <p class="structure-info amateur" v-else>Statut : Amateur</p>
-            </div> -->
+
+            <div class="participant-body">
+              <p class="structure-info">
+                Né(e) le : <strong>{{ player.date_naissance }}</strong>
+              </p>
+              <p class="structure-info" style="font-size:0.8rem; opacity:0.7" v-if="player.email">
+                {{ player.email }}
+              </p>
+            </div>
+
             <div class="card-footer">
               <button class="btn btn-outline full-width btn-sm">Profil</button>
             </div>
+
           </div>
         </div>
       </section>
       
     </div>
-    
-    <div v-else class="loading-state">Chargement...</div>
   </div>
 </template>
 
 <style scoped>
+/* MISE EN PAGE */
 .page-container { padding: 60px 5%; max-width: 1400px; margin: 0 auto; }
-
 .header-section { text-align: center; margin-bottom: 60px; }
 .page-main-title { font-size: 3rem; text-transform: uppercase; font-weight: 900; color: var(--text-light); text-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
 .page-subtitle { color: var(--text-gray); font-size: 1.2rem; margin-top: 10px; }
 
-/* Sections */
+/* ETATS (Loading/Error) */
+.state-container { text-align: center; padding: 50px; color: var(--text-gray); background: rgba(255,255,255,0.02); border-radius: 12px; margin: 20px 0; }
+.state-container.error { color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.3); }
+.spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* SECTIONS */
 .list-section { margin-bottom: 40px; }
-.section-title { 
-  font-size: 2rem; 
-  margin-bottom: 30px; 
-  border-left: 5px solid var(--accent-primary); 
-  padding-left: 20px; 
-  color: var(--text-light);
-}
+.section-title { font-size: 2rem; margin-bottom: 30px; border-left: 5px solid var(--accent-primary); padding-left: 20px; color: var(--text-light); font-weight: 800; }
+.section-divider { height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); margin: 60px 0; }
 
-.section-divider {
-  height: 1px;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
-  margin: 60px 0;
-}
-
-/* Grilles et Cartes */
-.grid-container { display: grid; gap: 30px; animation: fadeIn 0.4s ease; }
+/* GRILLES */
+.grid-container { display: grid; gap: 30px; animation: fadeIn 0.5s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .teams-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .participants-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
 
-.card {
-  background: var(--bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 25px;
-  display: flex; flex-direction: column;
-  transition: transform 0.3s ease, border-color 0.3s;
-}
+/* CARTES */
+.card { background: var(--bg-card); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 25px; display: flex; flex-direction: column; transition: transform 0.3s ease, border-color 0.3s; }
 .card:hover { transform: translateY(-5px); border-color: var(--accent-primary); }
 
-/* Styles spécifiques */
+/* HEADER CARTE */
 .card-header, .participant-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; }
-.avatar-large { width: 64px; height: 64px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
-.avatar-medium { width: 50px; height: 50px; background: rgba(255,255,255,0.05); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+.avatar-large { width: 64px; height: 64px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: white; font-weight: bold; }
+.avatar-medium { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: white; font-weight: bold;}
+
 .identity h2 { font-size: 1.3rem; margin: 0; font-weight: 800; }
-.tag { color: var(--accent-primary); font-weight: 700; }
+.tag { color: var(--accent-primary); font-weight: 700; font-size: 0.8rem; }
+.country-flag { font-size: 0.9rem; color: var(--text-gray); }
 
-.pro-card { border-color: rgba(255, 165, 0, 0.3); background: linear-gradient(to bottom right, var(--bg-card), rgba(255, 165, 0, 0.05)); }
-.pro-badge { background: orange; color: black; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-left: 8px; vertical-align: middle; font-weight: bold; }
-
+/* BODY CARTE */
 .card-body, .participant-body { flex-grow: 1; margin-bottom: 20px; color: var(--text-gray); }
+.structure-info { color: var(--text-gray); font-size: 0.9rem; margin-bottom: 5px; }
 .info-badges { display: flex; gap: 10px; margin-top: 15px; }
 .badge { font-size: 0.8rem; padding: 4px 10px; border-radius: 4px; background: rgba(255,255,255,0.05); }
 .badge.game { background: rgba(155, 89, 182, 0.2); color: #d2b4de; border: 1px solid rgba(155, 89, 182, 0.3); }
+
+/* BOUTONS */
 .btn-sm { padding: 8px 16px; font-size: 0.9rem; }
-.loading-state { text-align: center; padding: 50px; color: var(--text-gray); }
 </style>
