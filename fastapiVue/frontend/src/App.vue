@@ -11,7 +11,7 @@ onMounted(async () => {
     const res = await fetch('/api/films')
     rows.value = await res.json()
   } catch (e) {
-    error.value = 'Erreur API'
+    error.value = 'Erreur API : ' + e
   } finally {
     loading.value = false
   }
