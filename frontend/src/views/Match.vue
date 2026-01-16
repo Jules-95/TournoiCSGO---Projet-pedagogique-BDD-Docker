@@ -1,111 +1,25 @@
-
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
-// Mock données des matchs
-const plannedMatches = ref([
-  {
-    id: 1,
-    team1: 'Team Falcons',
-    team2: 'G2 Esports',
-    score: '0-0',
-    time: '18:00',
-    date: '16 Jan',
-    tournament: 'VCT Masters',
-    gameTous: 'CS:GO'
-  },
-  {
-    id: 2,
-    team1: 'Astralis',
-    team2: 'Natus Vincere',
-    score: '0-0',
-    time: '20:30',
-    date: '16 Jan',
-    tournament: 'BLAST Premier',
-    game: 'CS:GO'
-  },
-  {
-    id: 3,
-    team1: 'T1',
-    team2: 'DWG KIA',
-    score: '0-0',
-    time: '22:00',
-    date: '16 Jan',
-    tournament: 'LCK Spring',
-    game: 'CS:GO'
-  }
-])
+const plannedMatches = ref([])
+const liveMatches = ref([])
+const completedMatches = ref([])
 
-const liveMatches = ref([
-  {
-    id: 4,
-    team1: 'Fnatic',
-    team2: 'Team Liquid',
-    score: '12-8',
-    time: 'LIVE',
-    date: '16 Jan',
-    tournament: 'VCT EMEA',
-    game: 'CS:GO',
-  },
-  {
-    id: 5,
-    team1: 'Vitality',
-    team2: 'Heroic',
-    score: '15-14',
-    time: 'LIVE',
-    date: '16 Jan',
-    tournament: 'ESL Pro League',
-    game: 'CS:GO',
-    map: 'Map 3/3'
-  }
-])
+const fetchMatches = async () => {
+  try {
+    const res = await fetch('http://localhost:8000/matchs')
+    const data = await res.json()
 
-const completedMatches = ref([
-  {
-    id: 6,
-    team1: 'Cloud9',
-    team2: '100 Thieves',
-    score: '2-0',
-    time: '16:30',
-    date: '15 Jan',
-    tournament: 'VCT Americas',
-    game: 'CS:GO',
-    winner: 'Cloud9'
-  },
-  {
-    id: 7,
-    team1: 'FaZe Clan',
-    team2: 'Complexity',
-    score: '2-1',
-    time: '19:00',
-    date: '15 Jan',
-    tournament: 'IEM Katowice',
-    game: 'CS:GO',
-    winner: 'FaZe Clan'
-  },
-  {
-    id: 8,
-    team1: 'Gen.G',
-    team2: 'T1',
-    score: '2-0',
-    time: '14:00',
-    date: '15 Jan',
-    tournament: 'LCK Spring',
-    game: 'CS:GO',
-    winner: 'Gen.G'
-  },
-  {
-    id: 9,
-    team1: 'NRG Esports',
-    team2: 'OpTic Gaming',
-    score: '3-2',
-    time: '17:30',
-    date: '15 Jan',
-    tournament: 'RLCS',
-    game: 'CS:GO',
-    winner: 'NRG Esports'
+    plannedMatches.value = data.filter(m => m.etat === 'prévu')
+    liveMatches.value = data.filter(m => m.etat === 'en_cours')
+    completedMatches.value = data.filter(m => m.etat === 'terminé')
+
+  } catch (error) {
+    console.error('Erreur lors du chargement des matchs', error)
   }
-])
+}
+
+onMounted(fetchMatches)
 
 const getGameBadgeStyle = (game) => {
   const styles = {
