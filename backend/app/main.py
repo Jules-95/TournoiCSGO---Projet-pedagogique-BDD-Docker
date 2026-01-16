@@ -8,9 +8,9 @@ def get_conn():
     return psycopg2.connect(
 		host="pg-sandbox",
 		port=5432,
-		dbname="cine-store",
-		user="postgres",
-		password="password"
+		dbname="appdb",
+		user="appuser",
+		password="apppass"
 	)
 
 @app.get("/ping")
